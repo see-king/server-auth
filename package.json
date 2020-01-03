@@ -1,0 +1,23 @@
+{
+  "name": "@skng/auth",
+  "version": "1.0.0",
+  "description": "JWT server-side authentification",
+  "main": "index.js",
+  "scripts": {
+    "test": "node ./test.js"
+  },
+  "keywords": [
+    "jwt",
+    "auth",
+    "nodejs",
+    "server"
+  ],
+  "author": "Alex Kogan",
+  "license": "ISC",
+  "dependencies": {
+    "@hapi/joi": "^16.1.8",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^8.5.1",
+    "uniqid": "^5.2.0"
+  }
+}
