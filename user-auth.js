@@ -67,13 +67,14 @@ class UserAuth {
         }
     }
 
-    verifyToken( token, options = {} ){
+    verifyToken( token, options = {}){
         try {
 
             // mixin the passed verification options
             const verifyOptions = {...this.jwtDecryptOptions, ...options }
 
-            return jwt.verify(token, this.secret, verifyOptions ) 
+           return jwt.verify(token, this.secret, verifyOptions ) 
+
         } catch( e ){
             let error = "Unknown token verification error"
             let errorDetails = {}

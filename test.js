@@ -2,7 +2,7 @@
  * Testing the UserAuth class
  */
 
-const authClass = require('./index')
+const authClass = require('./user-auth')
 
 // server 1
 const auth = new authClass("12345")
