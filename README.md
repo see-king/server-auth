@@ -2,8 +2,9 @@
 
 ## Basic Usage
 1. use .env file to set up DB connection (see **Connection options in .env**) 
-2. Instantiate auth model
-3. Asyncronously call .register() or .login() methods:
+2. Add AUTH_JWT_KEY value in .env for JWT secret key
+3. Instantiate auth model
+4. Asyncronously call .register() or .login() methods:
 
 ```js
 // require dotenv config to set up mysql connection

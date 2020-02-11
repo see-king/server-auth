@@ -3,11 +3,11 @@ const joi = require('@hapi/joi')
 const uniqid = require('uniqid')
 const clr = require('./cli-colors')
 const pool = require('./pool')
-const key = process.env.AUTH_JWT_KEY
 const env = process.env
+const key = env.AUTH_JWT_KEY
 
 if( !key ){
-    throw `${clr.Red}\n\nERROR: JWT Key not found. Please, add JWT_KEY value to .env file${clr.Reset}\n\n`
+    throw `${clr.Red}\n\nERROR: JWT Key not found. Please, add AUTH_JWT_KEY value to .env file${clr.Reset}\n\n`
 }
 
 const auth = new authClass(key)
@@ -79,7 +79,10 @@ class userAuthModel {
     }
 
     async login(login, password) {
-        this.error = null
+
+        const self = this;
+
+        self.error = null
 
         try {
             // get users table name from options
