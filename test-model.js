@@ -1,14 +1,48 @@
 require("dotenv").config()
 const modelClass = require(".")
 const clr = require('./cli-colors')
+const joi = require("@hapi/joi")
+const ENV = process.env
 
-const { INIT_CWD } = process.env;
+const { INIT_CWD, AUTH_TEST_FIELDS } = ENV;
+
+
+const userLoginField = ENV.AUTH_USER_FIELDS_LOGIN || 'email'
+const userPasswordField = ENV.AUTH_USER_FIELDS_PASSWORD || 'password'
+const verificationUSer = 
+    {
+        [userLoginField]: joi.string().email().required(),
+        [userPasswordField]: joi.string().min(6).required()
+    }
 
 const newUser = {
-    email: "new@new.new",
-    password: "qwerty1234",
-    name: "New User"
+    [userLoginField]: "newnew@new.new",
+    [userPasswordField]: "qwerty1234",
 }
+
+// AUTH_TEST_FIELDS is a value for additional field in test user.
+// these are set as a string with the next format: fieldName1|defaultValue1,fieldName2|defaultValue2
+if (AUTH_TEST_FIELDS){
+    testFields = AUTH_TEST_FIELDS.split(",").map( item => item.split("|"))
+
+    console.log( "\nFound additional fields, updating test user...")
+    // populate test user and verification
+    testFields.map( item => {
+        [fname, fval] = item
+
+        console.log("Adding field:", fname, "with value:", fval)
+        // update user
+        newUser[fname] = fval
+        // update verification
+
+        verificationUSer[fname] = joi.string()
+    })
+
+    console.log("Verification object:", Object.keys(verificationUSer) )
+}
+
+const verification = { user: joi.object(verificationUSer) }
+
 
 console.log("\nRunning in [", INIT_CWD, "]\n")
 
@@ -16,6 +50,10 @@ console.log("\nRunning in [", INIT_CWD, "]\n")
 const test = async () => {
 
     const model = new modelClass()
+    const modelWithMoreFields = new modelClass({
+        verification
+    })
+
     let connected = false
 
     // check connection
@@ -82,9 +120,17 @@ const test = async () => {
         }
     
         try {
-            console.log(clr.Blue + "\nRegister a new user with correct data" + clr.Reset)
+            console.log(clr.Blue + "\nRegister a new user with wrong additional field" + clr.Reset)
             const registered = await model.register({ ...newUser })
             console.log("Registration result", registered, ", Error:", model.error)
+        } catch (e) {
+            console.log("Error registering user", e)
+        }
+    
+        try {
+            console.log(clr.Blue + "\nRegister a new user with correct data" + clr.Reset)
+            const registered = await modelWithMoreFields.register({ ...newUser })
+            console.log("Registration result", registered, ", Error:", modelWithMoreFields.error)
         } catch (e) {
             console.log("Error registering user", e)
         }
@@ -119,6 +165,11 @@ const test = async () => {
                         console.log(clr.Yellow + "Error verifying renewed token:" + clr.Reset, e.message)
                     }
                 }
+                
+                // attempt to logout
+                console.log(clr.Blue + "\nAttempt to logout..." + clr.Reset)
+                await model.logout(token)
+                console.log(clr.Blue + "\nLogged out" + clr.Reset)
     
     
     

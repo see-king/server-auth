@@ -67,6 +67,11 @@ class UserAuth {
         }
     }
 
+    decodeToken(token, options = {}){
+        const verifyOptions = {...this.jwtDecryptOptions, ...options }
+        return jwt.decode(token, verifyOptions)
+    }
+
     verifyToken( token, options = {}){
         try {
 

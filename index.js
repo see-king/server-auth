@@ -39,19 +39,21 @@ class userAuthModel {
                     sessions: process.env.AUTH_TABLES_SESSIONS || "sessions"
                 },
 
-                fields: {
+                userFields: {
                     id:  env.AUTH_USER_FIELDS_ID || "id",
                     login: env.AUTH_USER_FIELDS_LOGIN || "email",
-                    password:  env.AUTH_USER_FIELDS_PASSWORD || "password",
+                    password:  env.AUTH_USER_FIELDS_PASSWORD || "password"
+                },
+
+                sessionFields: {                    
                     session_id: env.AUTH_SESSION_FIELDS_SESSION ||  "sessionId",
-                    session_user: env.AUTH_SESSION_FIELDS_USER || "userId",
+                    session_user: env.AUTH_SESSION_FIELDS_USER || "userId"
                 },
 
                 verification: {
                     user: joi.object({
                         email: joi.string().email().required(),
                         password: joi.string().min(6).required(),
-                        name: joi.string().min(2).required()
                     })
                 },
 
@@ -89,7 +91,7 @@ class userAuthModel {
             const table = this.options.tables.users
 
             // get login field from options
-            const field = this.options.fields.login
+            const field = this.options.userFields.login
 
             // get login query from options
             const query = this.options.queries.login
@@ -105,20 +107,20 @@ class userAuthModel {
             
 
             // if user fetched
-            if (user && user[this.options.fields.password] && user[this.options.fields.id]) {
+            if (user && user[this.options.userFields.password] && user[this.options.userFields.id]) {
 
                 // create session id
                 const sessionId = uniqid()
 
                 // check the password hash and get token
-                const token = await auth.auth(password, user.password, { userId: user[this.options.fields.id], sessionId })
+                const token = await auth.auth(password, user.password, { userId: user[this.options.userFields.id], sessionId })
 
                 // if token received - store session to DB and return token
                 if (token) {
                     this.token = token
                     this.user = user
                     // TODO: store session to DB
-                    if( await this.storeSession(sessionId, user[this.options.fields.id]) ){
+                    if( await this.storeSession(sessionId, user[this.options.userFields.id]) ){
                         return token;
                     } else {
                         return false;
@@ -183,8 +185,9 @@ class userAuthModel {
                     this.options.logger("error registering", e.message)
                     let message = "Error writing user to database"
                     switch (e.code) {
+                        // catch duplicate entry error
                         case "ER_DUP_ENTRY":
-                            message = "Email already exists!"
+                            message = "User with such parameters already exists!"
                             break
                     }
                     this.error = message
@@ -201,7 +204,7 @@ class userAuthModel {
     }
 
     async storeSession( sessionId, userId ){
-        const {session_id, session_user} = this.options.fields
+        const {session_id, session_user} = this.options.sessionFields
         const q = this.prepareInsertStatement(
             { 
                 [session_id]: sessionId, 
@@ -238,8 +241,36 @@ class userAuthModel {
         return { query, values }
     }
 
-    deleteSesion( sessionId, userId ){
-        
+    async logout(token){
+        const content = auth.decodeToken(token);
+        if( content ){
+            const {sessionId, userId} = content;
+            if( sessionId && userId ){
+                await this.deleteSesion(sessionId, userId);
+            } else {
+                this.log("Session id and user id were not found in token")
+            }
+        } else {
+            this.log("Could not decode token")
+        }
+    }
+
+    async deleteSesion( sessionId, userId ){
+        try{
+            const sessionIdField = this.options.sessionFields.session_id
+            const userIdField = this.options.userFields.id
+            const sessionTable = this.options.tables.sessions
+
+            await this.pool.query(
+                `DELETE FROM ${sessionTable} WHERE ${sessionIdField}=? AND ${userIdField}=?`,
+                [sessionId, userId]
+                )
+            this.log("session deleted:", `${sessionId}, ${userId}`);
+            return true;
+        }catch(e){
+            this.log(e.code, e.mesage);
+            return false;
+        }
     }
 
 
@@ -290,6 +321,10 @@ class userAuthModel {
         }
         
         return false;        
+    }
+
+    log( message, params = {} ){
+        this.options.logger(message, params )
     }
 
 }
