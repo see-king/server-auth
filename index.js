@@ -329,4 +329,6 @@ class userAuthModel {
 
 }
 
+userAuthModel.service = auth
+
 module.exports = userAuthModel
