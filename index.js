@@ -257,12 +257,15 @@ class userAuthModel {
 
     async deleteSesion( sessionId, userId ){
         try{
-            const sessionIdField = this.options.sessionFields.session_id
-            const userIdField = this.options.userFields.id
+
+            const {session_id, session_user} = this.options.sessionFields
+
+            // const sessionIdField = this.options.sessionFields.session_id
+            // const userIdField = this.options.userFields.id
             const sessionTable = this.options.tables.sessions
 
             await this.pool.query(
-                `DELETE FROM ${sessionTable} WHERE ${sessionIdField}=? AND ${userIdField}=?`,
+                `DELETE FROM ${sessionTable} WHERE ${session_id}=? AND ${session_user}=?`,
                 [sessionId, userId]
                 )
             this.log("session deleted:", `${sessionId}, ${userId}`);
