@@ -166,6 +166,19 @@ const test = async () => {
                         console.log(clr.Yellow + "Error verifying renewed token:" + clr.Reset, e.message)
                     }
                 }
+
+                // attempt to login with shouldAuthenticate callback returning false
+                console.log(clr.Blue + "attempt to login with shouldAuthenticate callback returning false" + clr.Reset)
+                
+                // create callback function
+                const callback = () => false 
+
+                // setting callback function custom error message
+                callback.error ="Wrong credentials"; 
+
+                const res = await model.login(newUser.email, newUser.password, callback )
+                console.log( clr.Yellow + "Result:", res, clr.Red + "\nError:", model.error )
+
                 
                 // attempt to logout
                 console.log(clr.Blue + "\nAttempt to logout..." + clr.Reset)

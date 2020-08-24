@@ -80,57 +80,108 @@ class userAuthModel {
         }
     }
 
-    async login(login, password) {
-
-        const self = this;
-
-        self.error = null
-
-        try {
+    /**
+     * Retuns user by login/password combination using current configuration or null if not found.
+     * @param {*} login 
+     * @param {*} password 
+     * @throws {Error} database error when fetching user
+     * @returns {object|null} 
+     */
+    async userByLoginAndPassword( login, password){
+                
             // get users table name from options
             const table = this.options.tables.users
-
+    
             // get login field from options
             const field = this.options.userFields.login
-
+    
             // get login query from options
             const query = this.options.queries.login
                 // replace table placeholder
                 .replace(/{{(table)}}/, table)
                 // replace field placeholder
                 .replace(/{{(login)}}/, field)
-
-
+    
+    
             // fetch user from DB
             const [result] = await this.pool.query(query, [login])
-            const user = result[0]
-            
+            //const user = result[0]
+            return result[0]        
+    }
+
+    /**
+     * Authenticates user: stores session in DB and returns authentication token on success, returns false on fail.
+     * @param {*} login 
+     * @param {*} password 
+     * @param {function: bool} shouldAuthenticate optional boolean callback function. If returns false, login process won't be finished. Can be used to additional validation, e.g. user credentials. Set callback's .error property to customize error message.
+     * @returns {string|false} Returns token string or false on fail. Error message is stored in instance's .error property.
+     */
+    async login(login, password, shouldAuthenticate = () => true ) {
+
+        const self = this;
+
+        self.error = null
+
+        try {
+
+            // get users table name from options
+            const table = this.options.tables.users
+    
+            // get login field from options
+            const field = this.options.userFields.login
+    
+            // get login query from options
+            const query = this.options.queries.login
+                // replace table placeholder
+                .replace(/{{(table)}}/, table)
+                // replace field placeholder
+                .replace(/{{(login)}}/, field)
+    
+    
+            // fetch user from DB
+            const [result] = await this.pool.query(query, [login])
+            const user = result[0]        
 
             // if user fetched
-            if (user && user[this.options.userFields.password] && user[this.options.userFields.id]) {
+            if (user && user[this.options.userFields.password] && user[this.options.userFields.id] ) {
 
-                // create session id
-                const sessionId = uniqid()
+                // additional validation via callback
+                if( shouldAuthenticate(user) ){
 
-                // check the password hash and get token
-                const token = await auth.auth(password, user.password, { userId: user[this.options.userFields.id], sessionId })
-
-                // if token received - store session to DB and return token
-                if (token) {
-                    this.token = token
-                    this.user = user
-                    // TODO: store session to DB
-                    if( await this.storeSession(sessionId, user[this.options.userFields.id]) ){
-                        return token;
+                    // create session id
+                    const sessionId = uniqid()
+    
+                    // check the password hash and get token
+                    const token = await auth.auth(
+                        // login data
+                        password, user.password, 
+                        // payload
+                        { userId: user[this.options.userFields.id], sessionId }, 
+                        // expire to default 30 minutes
+                        30
+                        )
+    
+                    // if token received - store session to DB and return token
+                    if (token) {
+                        this.token = token
+                        this.user = user
+                        // TODO: store session to DB
+                        if( await this.storeSession(sessionId, user[this.options.userFields.id]) ){
+                            return token;
+                        } else {
+                            return false;
+                        }
                     } else {
-                        return false;
+                        this.error = auth.error
+                        return false
                     }
+
                 } else {
-                    this.error = auth.error
+                    // error for additional validation via shouldAuthenticate
+                    // set shouldAuthenticate.error to some error text to customize this specific error.
+                    this.error = shouldAuthenticate.error || "User validation failed"
                     return false
                 }
-
-
 
             } else {
                 this.error = "Error fetching user from DB"

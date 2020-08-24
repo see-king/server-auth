@@ -50,15 +50,16 @@ class UserAuth {
      * @param {*} password 
      * @param {*} passwordHash 
      * @param {*} payload JWT.sign payload, basically anything to store within the token (see https://www.npmjs.com/package/jsonwebtoken for details )     
-     * @param {*} expireMinutes - minutes to expire the token within, defaults to 30
-    */
+     * @param {*} expireMinutes - minutes to expire the token within, defaults to 30          
+     */
     async auth( password, passwordHash, payload = {}, expireMinutes = 30){
         try{            
-            if( await bcrypt.compare( password, passwordHash) ){
+            if( await bcrypt.compare( password, passwordHash)  ){
                 return this.getToken(payload, expireMinutes) 
             } else {
                 this.log("Password didn't match", {} )
-                this.error = "Password didn't match"                
+                console.debug("shouldAuthenticate:", shouldAuthenticate)
+                this.error = shouldAuthenticate.error || "Password didn't match"                
                 return false
             }
         } catch( e ){
