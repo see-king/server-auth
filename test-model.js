@@ -2,6 +2,7 @@ require("dotenv").config()
 const modelClass = require(".")
 const clr = require('./cli-colors')
 const joi = require("@hapi/joi")
+const uniqid = require("uniqid")
 const ENV = process.env
 
 const { INIT_CWD, AUTH_TEST_FIELDS } = ENV;
@@ -16,7 +17,7 @@ const verificationUSer =
     }
 
 const newUser = {
-    [userLoginField]: "newnew@new.new",
+    [userLoginField]: `test_user_${uniqid()}@new.new`,
     [userPasswordField]: "qwerty1234",
 }
 
@@ -121,7 +122,7 @@ const test = async () => {
     
         try {
             console.log(clr.Blue + "\nRegister a new user with wrong additional field" + clr.Reset)
-            const registered = await model.register({ ...newUser })
+            const registered = await model.register({ ...newUser, wrongField: "some value" })
             console.log("Registration result", registered, ", Error:", model.error)
         } catch (e) {
             console.log("Error registering user", e)

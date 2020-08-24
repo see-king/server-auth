@@ -179,7 +179,7 @@ class userAuthModel {
                     // execute insert query
                     const [insert] = await this.pool.execute(query, values)
                     this.options.logger(insert, insert.insertId)
-                    return true
+                    return insert.insertId
 
                 } catch (e) {
                     this.options.logger("error registering", e.message)
