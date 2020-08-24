@@ -9,7 +9,7 @@
 ```js
 // require dotenv config to set up mysql connection
 require("dotenv").config()
-const modelClass = require("@see-king/auth")
+const modelClass = require("@skng/auth")
 
 // instantiate model
 const model = new modelClass()
