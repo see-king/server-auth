@@ -58,8 +58,8 @@ class UserAuth {
                 return this.getToken(payload, expireMinutes) 
             } else {
                 this.log("Password didn't match", {} )
-                console.debug("shouldAuthenticate:", shouldAuthenticate)
-                this.error = shouldAuthenticate.error || "Password didn't match"                
+                // console.debug("shouldAuthenticate:", shouldAuthenticate)
+                // this.error = shouldAuthenticate.error || "Password didn't match"                
                 return false
             }
         } catch( e ){

@@ -7,7 +7,9 @@ const clr = {
     Magenta: '\u001b[35m',
     Cyan: '\u001b[36m',
     White: '\u001b[37m',
-    Reset: '\u001b[0m'
+    Reset: '\u001b[0m',
+
+    _C: ( text, color = "White" ) => `${clr[color]}${text}${clr.Reset}`
 }
 
 module.exports = clr

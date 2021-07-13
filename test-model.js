@@ -1,7 +1,7 @@
 require("dotenv").config()
 const modelClass = require(".")
 const clr = require('./cli-colors')
-const joi = require("@hapi/joi")
+const joi = require("joi")
 const uniqid = require("uniqid")
 const ENV = process.env
 
@@ -168,15 +168,25 @@ const test = async () => {
                 }
 
                 // attempt to login with shouldAuthenticate callback returning false
-                console.log(clr.Blue + "attempt to login with shouldAuthenticate callback returning false" + clr.Reset)
+                console.log(clr.Blue + "attempt to login with shouldAuthenticate callback that returns false" + clr.Reset)
                 
-                // create callback function
-                const callback = () => false 
+                // create callback function that returns false
+                let callback = async () => false 
 
                 // setting callback function custom error message
                 callback.error ="Wrong credentials"; 
 
-                const res = await model.login(newUser.email, newUser.password, callback )
+                let res = await model.login(newUser.email, newUser.password, callback )
+                console.log( clr.Yellow + "Result:", res, clr.Red + "\nError:", model.error )
+
+
+                // attempt to login with shouldAuthenticate callback returning null
+                console.log(clr.Blue + "attempt to login with shouldAuthenticate callback that returns null" + clr.Reset)
+                
+                // create callback function that sets its own error and returns null
+                callback = async () => { callback.error = "something went wrong..." } 
+                
+                res = await model.login(newUser.email, newUser.password, callback )
                 console.log( clr.Yellow + "Result:", res, clr.Red + "\nError:", model.error )
 
                 

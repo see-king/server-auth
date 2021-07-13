@@ -76,3 +76,6 @@ const model = new modelClass({
     ... // To be continued...
 })
 ```
+
+## Test scripts
+Use `npm test` to test mainframe and `npm run test-model` to test DB model module
