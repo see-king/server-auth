@@ -55,6 +55,26 @@ class userAuthModel {
           }),
         },
 
+        // token lifespan in minutes
+        tokenLifespan: 30,
+
+        // error string handler
+        errorStringHandler: (e) => {
+          let error;
+
+          switch (e.code) {
+            case "ECONNREFUSED":
+              error = "Connection refused";
+              this.log(error);
+              break;
+            default:
+              error = "Error fetching user from DB";
+              this.log(error);
+              break;
+          }
+          return error;
+        },
+
         // Logger calback for error messages. Default is console.log
         logger: console.log,
       },
@@ -77,32 +97,32 @@ class userAuthModel {
     }
   }
 
-  /**
-   * Retuns user by login/password combination using current configuration or null if not found.
-   * @param {*} login
-   * @param {*} password
-   * @throws {Error} database error when fetching user
-   * @returns {object|null}
-   */
-  async userByLoginAndPassword(login, password) {
-    // get users table name from options
-    const table = this.options.tables.users;
+  // /**
+  //  * Retuns user by login/password combination using current configuration or null if not found.
+  //  * @param {*} login
+  //  * @param {*} password
+  //  * @throws {Error} database error when fetching user
+  //  * @returns {object|null}
+  //  */
+  // async userByLoginAndPassword(login, password) {
+  //   // get users table name from options
+  //   const table = this.options.tables.users;
 
-    // get login field from options
-    const field = this.options.userFields.login;
+  //   // get login field from options
+  //   const field = this.options.userFields.login;
 
-    // get login query from options
-    const query = this.options.queries.login
-      // replace table placeholder
-      .replace(/{{(table)}}/, table)
-      // replace field placeholder
-      .replace(/{{(login)}}/, field);
+  //   // get login query from options
+  //   const query = this.options.queries.login
+  //     // replace table placeholder
+  //     .replace(/{{(table)}}/, table)
+  //     // replace field placeholder
+  //     .replace(/{{(login)}}/, field);
 
-    // fetch user from DB
-    const [result] = await this.pool.query(query, [login]);
-    //const user = result[0]
-    return result[0];
-  }
+  //   // fetch user from DB
+  //   const [result] = await this.pool.query(query, [login]);
+  //   //const user = result[0]
+  //   return result[0];
+  // }
 
   /**
    * Authenticates user: stores session in DB and returns authentication token on success, returns false on fail.
@@ -116,14 +136,17 @@ class userAuthModel {
 
     self.error = null;
 
+    const { tokenLifespan, userFields, errorStringHandler } = this.options;
+
     try {
       // get users table name from options
       const table = this.options.tables.users;
 
+
       // get login field from options
-      const field = this.options.userFields.login;
-      const idField = this.options.userFields.id;
-      const passwordField = this.options.userFields.password;
+      const field = userFields.login;
+      const idField = userFields.id;
+      const passwordField = userFields.password;
 
       // get login query from options
       const query = this.options.queries.login
@@ -160,8 +183,9 @@ class userAuthModel {
         user.password,
         // payload
         { userId: user[idField], sessionId },
-        // expire to default 30 minutes
-        30
+        
+        // expire to tokenLifeSpan (defaults to 30 minutes)
+        tokenLifespan
       );
 
       // if token received - store session to DB and return token
@@ -181,16 +205,11 @@ class userAuthModel {
       this.error = "Error storing session";
       return false;
     } catch (e) {
-      switch (e.code) {
-        case "ECONNREFUSED":
-          this.error = "Connection refused";
-          this.log(this.error);
-          break;
-        default:
-          this.error = "Error fetching user from DB";
-          this.log(this.error);
-          break;
-      }
+      // get error string from error string handler
+      this.error =
+        typeof errorStringHandler === "function"
+          ? errorStringHandler(e)
+          : e.message;
       return false;
     }
   }
