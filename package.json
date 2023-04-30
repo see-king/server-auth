@@ -1,6 +1,6 @@
 {
   "name": "@skng/auth",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "JWT server-side authentification for MySQL DB",
   "main": "index.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "dotenv": "^8.6.0",
     "joi": "^17.4.2",
     "jsonwebtoken": "^8.5.1",
-    "mysql2": "^2.3.0",
+    "mysql2": "^2.3.3",
     "uniqid": "^5.4.0"
   }
 }
